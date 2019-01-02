@@ -3,7 +3,7 @@
 基于laravel-mix实现的配置
 
 > 学习过程
-> <br> node-sass sas-loader => sass-resources-loader => webpackConfig => laravel-mix => webpackConfig
+> <br> node-sass sass-loader => sass-resources-loader => webpackConfig => laravel-mix => webpackConfig
 
 项目基于laravel框架，是一个Laravel+Vue+MintUI实现的cordova套壳app，搭建框架时由于引入rem进行适配，所以通过_functions.scss对px转换rem定义了一个函数，进而产生全局引入该函数的需求，深踩一坑
 
