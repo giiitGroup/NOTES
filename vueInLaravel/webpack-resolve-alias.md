@@ -1,3 +1,4 @@
+如何优雅的使用alias配置的path消灭../循环
 ```javascript
 mix.webpackConfig({
     resolve: {
