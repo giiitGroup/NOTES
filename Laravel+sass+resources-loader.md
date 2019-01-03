@@ -32,7 +32,7 @@ mix.js('resources/assets/js/app.js', 'public/js')
  ```
  <br>
 
-* laravel-mix内部目录
+* node-modules/laravel-mix内部目录
 
 ``` 
 + icons // 一个叫icons的文件夹
