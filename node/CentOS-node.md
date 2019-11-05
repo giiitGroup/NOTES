@@ -24,7 +24,7 @@
 # npm -v
 > 6.12.0
 ```
-## 创建node启动文件
+**创建node启动文件**
 ```shell
 # cd ~
 # mkdir projects
@@ -41,11 +41,11 @@ http.createServer(function (req, res) {
     res.end();
 }).listen(8080);
 ```
-## 启动node服务，打开监听端口
+**启动node服务，打开监听端口**
 ```shell
 # node test.js &
 ```
-## 在本地telnet测试端口
+**在本地telnet测试端口**
 ```shell
 # telnet xxx.xxx.xxx.xxx 8080
 ```
