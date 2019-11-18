@@ -1,14 +1,14 @@
 # CentOS7.2上node的配置
 ## node环境
-在[**node官网**](http://nodejs.cn/download/)获取node下载链接，服务器为CentOS7.2，所以选择Linux64位版本。
+在[**node官网**](http://nodejs.cn/download/)获取node下载链接或最新版本号，服务器为CentOS7.2，所以选择Linux64位版本。
 
-**1.shell中通过yum直接安装nodejs**
+## **1.shell中通过yum直接安装nodejs** ##
 ```shell
-更新nodejs版本，yum本身有版本的延迟，需要结合官网手动指定node版本
+更新nodejs版本，yum本身有版本的延迟，需要手动指定node版本
 # curl -sL https://rpm.nodesource.com/setup_10.x | sudo bash -
 # sudo yum install nodejs
 ```
-**2.shell中通过wget下载node**
+## **2.shell中通过wget下载node** ##
 ```shell
 # yum install -y wget
 # cd /usr/local
@@ -16,12 +16,12 @@
 # cd node
 # wget https://cdn.npm.taobao.org/dist/node/v12.13.0/node-v12.13.0-linux-x64.tar.xz
 ```
-***2.1压缩包需要两步完全解压***
+### **2.1压缩包需要两步完全解压** ###
 ```shell
 # xz -d node-v12.13.0-linux-x64.tar.xz
 # tar -xvf node-v12.13.0-linux-x64.tar
 ```
-***2.2建立软连接,把node和npm配置为全局命令***
+### **2.2建立软连接,把node和npm配置为全局命令** ###
 ```shell
 # ln -s node-v12.13.0-linux-x64/bin/node /usr/local/bin/node
 # ln -s node-v12.13.0-linux-x64/bin/npm /usr/local/bin/npm
