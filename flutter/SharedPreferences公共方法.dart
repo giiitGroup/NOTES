@@ -1,4 +1,4 @@
-```
+
   import 'package:shared_preferences/shared_preferences.dart';
   
   static Object setSharedPerfence(String key, Object value) async {
@@ -44,4 +44,4 @@
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.clear(); ////清空缓存
   }
-```
+
