@@ -68,3 +68,9 @@ export function tarFormatCheck(file) {
     });
 }
 ```
+
+参考规范
+
+http://www.gnu.org/software/tar/manual/html_node/Standard.html
+
+https://www.ibm.com/docs/en/zos/2.1.0?topic=formats-tar-format-tar-archives
