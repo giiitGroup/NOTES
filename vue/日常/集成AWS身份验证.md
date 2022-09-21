@@ -1,0 +1,241 @@
+# 集成 AWS 身份验证
+
+## 场景
+
+项目部署于亚马逊服务器，要求集成亚马逊的身份验证
+
+> 参考： https://qiita.com/daikiojm/items/b02c19cfea6766c308ca
+
+## START
+
+### NPM
+
+> npm i aws-sdk amazon-cognito-identity-js -S
+
+### CONFIG
+
+```javascript
+// @/config/cognito.js
+export default {
+  Region: "ap-northeast-1", // region
+  UserPoolId: "ap-northeast-1_9Xzjqyl8R", // 用户池ID
+  ClientId: "2r0npphgued179uqmkvp2vvcr7", // 客户端ID
+  IdentityPoolId: "ap-northeast-1:6783efb3-6da7-4a1e-b8b0-65094f000ed2", // 身份池ID
+};
+```
+
+## CODE
+
+定义 Cognito 类
+
+```javascript
+// @/utils/cognito.js
+import {
+  CognitoUserPool,
+  CognitoUser,
+  AuthenticationDetails,
+  CognitoUserAttribute,
+} from "amazon-cognito-identity-js";
+import { Config, CognitoIdentityCredentials } from "aws-sdk";
+
+export default class Cognito {
+  configure(config) {
+    if (config.userPool) {
+      this.userPool = config.userPool;
+    } else {
+      this.userPool = new CognitoUserPool({
+        UserPoolId: config.UserPoolId,
+        ClientId: config.ClientId,
+      });
+    }
+    としてUserAttributeにも登録;
+    Config.region = config.region;
+    Config.credentials = new CognitoIdentityCredentials({
+      IdentityPoolId: config.IdentityPoolId,
+    });
+    this.options = config;
+  }
+
+  static install = (Vue, options) => {
+    Object.defineProperty(Vue.prototype, "$cognito", {
+      get() {
+        return this.$root._cognito;
+      },
+    });
+
+    Vue.mixin({
+      beforeCreate() {
+        if (this.$options.cognito) {
+          this._cognito = this.$options.cognito;
+          this._cognito.configure(options);
+        }
+      },
+    });
+  };
+
+  /**
+   * 代码有效性验证
+   */
+  confirmation(username, confirmationCode) {
+    const userData = { Username: username, Pool: this.userPool };
+    const cognitoUser = new CognitoUser(userData);
+    return new Promise((resolve, reject) => {
+      cognitoUser.confirmRegistration(confirmationCode, true, (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result);
+        }
+      });
+    });
+  }
+
+  /**
+   * 注册
+   * 使用邮箱
+   */
+  signUp(username, password) {
+    const dataEmail = { Name: "email", Value: username };
+    const attributeList = [];
+    attributeList.push(new CognitoUserAttribute(dataEmail));
+    return new Promise((resolve, reject) => {
+      this.userPool.signUp(
+        username,
+        password,
+        attributeList,
+        null,
+        (err, result) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(result);
+          }
+        }
+      );
+    });
+  }
+  /**
+   * 登录
+   */
+  login(username, password) {
+    const userData = { Username: username, Pool: this.userPool };
+    const cognitoUser = new CognitoUser(userData);
+    const authenticationData = { Username: username, Password: password };
+    const authenticationDetails = new AuthenticationDetails(authenticationData);
+    return new Promise((resolve, reject) => {
+      cognitoUser.authenticateUser(authenticationDetails, {
+        onSuccess: (result) => {
+          // 実際にはクレデンシャルなどをここで取得する(今回は省略)
+          resolve(result);
+        },
+        onFailure: (err) => {
+          reject(err);
+        },
+      });
+    });
+  }
+
+  /**
+   * 退出登录
+   */
+  logout() {
+    this.userPool.getCurrentUser().signOut();
+  }
+
+  /**
+   * 登录状态判定
+   */
+  isAuthenticated() {
+    const cognitoUser = this.userPool.getCurrentUser();
+    return new Promise((resolve, reject) => {
+      if (cognitoUser === null) {
+        reject(cognitoUser);
+      }
+      cognitoUser.getSession((err, session) => {
+        if (err) {
+          reject(err);
+        } else {
+          if (!session.isValid()) {
+            reject(session);
+          } else {
+            resolve(session);
+          }
+        }
+      });
+    });
+  }
+}
+```
+
+路由限制
+
+```javascript
+// @/router/index.js
+import Vue from "vue";
+import VueRouter from "vue-router";
+import PageLayout from "@/layouts/PageLayout";
+// import { pages } from "./routes";
+Vue.use(VueRouter);
+
+function isAuthenticated(to, from, next) {
+  this.$cognito
+    .isAuthenticated()
+    .then((res) => {
+      next();
+    })
+    .catch((e) => {
+      next({
+        path: "/login",
+        query: {
+          redirect: to.fullPath,
+        },
+      });
+    });
+}
+
+const router = new VueRouter({
+  routes: [
+    {
+      path: "*",
+      hidden: true,
+      component: () => import("views/404/index.vue"),
+    },
+    {
+      path: "/",
+      name: "layout",
+      component: PageLayout,
+      children: pages,
+      redirect: "home",
+      beforeEnter: isAuthenticated,
+    },
+    {
+      name: "login",
+      path: "/login",
+      component: () => import("@/views/login/index"),
+    },
+  ],
+});
+
+export default router;
+```
+
+vue 实例
+
+```javascript
+// main.js
+import App from "./App.vue";
+import Vue from "vue";
+import router from "./router/index";
+
+import Cognito from "@/utils/cognito";
+import config from "@/config/cognito";
+
+Vue.use(Cognito, config);
+
+new Vue({
+  router,
+  cognito: new Cognito(),
+  render: (h) => h(App),
+}).$mount("#app");
+```
+
