@@ -37,8 +37,10 @@ import {
   CognitoUserAttribute,
 } from "amazon-cognito-identity-js";
 import { Config, CognitoIdentityCredentials } from "aws-sdk";
+import Vue from "vue";
+import config from "@/config/cognito";
 
-export default class Cognito {
+class Cognito {
   configure(config) {
     if (config.userPool) {
       this.userPool = config.userPool;
@@ -165,6 +167,8 @@ export default class Cognito {
     });
   }
 }
+Vue.use(Cognito, config);
+export default new Cognito();
 ```
 
 路由限制
@@ -174,11 +178,12 @@ export default class Cognito {
 import Vue from "vue";
 import VueRouter from "vue-router";
 import PageLayout from "@/layouts/PageLayout";
-// import { pages } from "./routes";
+import cognito from '@/utils/cognito'
+
 Vue.use(VueRouter);
 
 function isAuthenticated(to, from, next) {
-  this.$cognito
+  cognito
     .isAuthenticated()
     .then((res) => {
       next();
@@ -227,15 +232,11 @@ import App from "./App.vue";
 import Vue from "vue";
 import router from "./router/index";
 
-import Cognito from "@/utils/cognito";
-import config from "@/config/cognito";
-
-Vue.use(Cognito, config);
+import cognito from "@/utils/cognito";
 
 new Vue({
   router,
-  cognito: new Cognito(),
+  cognito,
   render: (h) => h(App),
 }).$mount("#app");
 ```
-
