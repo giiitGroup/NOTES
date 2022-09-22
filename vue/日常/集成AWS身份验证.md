@@ -18,9 +18,9 @@
 // @/config/cognito.js
 export default {
   Region: "ap-northeast-1", // region
-  UserPoolId: "ap-northeast-1_9Xzjqyl8R", // 用户池ID
-  ClientId: "2r0npphgued179uqmkvp2vvcr7", // 客户端ID
-  IdentityPoolId: "ap-northeast-1:6783efb3-6da7-4a1e-b8b0-65094f000ed2", // 身份池ID
+  UserPoolId: "ap-northeast-1_xxxxxxxxx", // 用户池ID
+  ClientId: "xxxxxxxxxxxxxxxxxxxxxxxxxx", // 客户端ID
+  IdentityPoolId: "ap-northeast-1:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx", // 身份池ID
 };
 ```
 
