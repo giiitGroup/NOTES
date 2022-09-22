@@ -230,6 +230,7 @@ import router from "./router/index";
 import Cognito from "@/utils/cognito";
 import config from "@/config/cognito";
 
+// 导入配置
 Vue.use(Cognito, config);
 
 new Vue({
