@@ -144,6 +144,78 @@ class Cognito {
     this.userPool.getCurrentUser().signOut();
   }
 
+  // 忘记密码
+  forgotPassword(username) {
+    console.log("Forgot Password", username);
+    const userData = {
+      Username: username,
+      Pool: this.userPool,
+    };
+
+    const cognitoUser = new CognitoUser(userData);
+    return new Promise((resolve, reject) => {
+      cognitoUser.forgotPassword({
+        onSuccess: function (result) {
+          console.log("call result: " + result);
+        },
+        onFailure: function (err) {
+          console.log("call result: " + err);
+          reject(err);
+        },
+        inputVerificationCode() {
+          console.log("call inputVerificationCode: ");
+          resolve();
+        },
+      });
+    });
+  }
+  // 忘记密码 修改密码
+  confirmPassword(username, verificationCode, newPassword) {
+    const userData = {
+      Username: username,
+      Pool: this.userPool,
+    };
+    const cognitoUser = new CognitoUser(userData);
+    return new Promise((resolve, reject) => {
+      cognitoUser.confirmPassword(verificationCode, newPassword, {
+        onSuccess: function (result) {
+          console.log("call result: " + result);
+          resolve();
+        },
+        onFailure: function (err) {
+          console.log("call result: " + err);
+          reject(err);
+        },
+      });
+    });
+  }
+  // 修改密码
+  changePassword(oldPassword, newPassword) {
+    return new Promise((resolve, reject) => {
+      const cognitoUser = this.userPool.getCurrentUser();
+      cognitoUser.getSession((err, session) => {
+        if (err) {
+          reject(err);
+        } else {
+          console.log(session);
+          if (session.isValid()) {
+            cognitoUser.changePassword(
+              oldPassword,
+              newPassword,
+              (err, result) => {
+                if (err) {
+                  console.log(err.message || JSON.stringify(err));
+                  reject(err.message);
+                } else {
+                  resolve();
+                }
+              }
+            );
+          }
+        }
+      });
+    });
+  }
   /**
    * 登录状态判定
    */
@@ -178,7 +250,7 @@ export default new Cognito();
 import Vue from "vue";
 import VueRouter from "vue-router";
 import PageLayout from "@/layouts/PageLayout";
-import cognito from '@/utils/cognito'
+import cognito from "@/utils/cognito";
 
 Vue.use(VueRouter);
 
