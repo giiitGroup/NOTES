@@ -132,7 +132,15 @@ class Cognito {
         },
         onFailure: (err) => {
           reject(err);
+        },,
+        mfaRequired: function (codeDeliveryDetails) {
+          // MFA is required to complete user authentication.
+          // Get the code from user and call
         },
+        // 非管理员身份，或其他用户初次登录时可能会被验证拦截，需要修改密码，此处手动调用后静默处理
+        newPasswordRequired: function (userAttributes, requiredAttributes) {
+          cognitoUser.completeNewPasswordChallenge(password, {}, this)
+        }
       });
     });
   }
