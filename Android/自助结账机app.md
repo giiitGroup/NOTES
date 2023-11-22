@@ -202,6 +202,133 @@ onCreate中建立监听
         LogUtil.e(TAG, " print call :" + callUuid + ";" + PrintUtil.gson.toJson(request));
     }
 ```
+切纸
+> <b>官方的IOT标准能力sdk以及提供的demo，包括新版的商米内置打印机sdk中，并没有发现有触发切纸的操作，结束打印后需要人工撕小票，所以需要参考旧版SDK文档，通过AIDL的方式连接打印服务</b>
+> 
+> <b>https://file.cdn.sunmi.com/SUNMIDOCS/%E5%95%86%E7%B1%B3%E8%87%AA%E5%8A%A9%E6%89%93%E5%8D%B0%E6%9C%BA%E5%BC%80%E5%8F%91%E8%80%85%E6%96%87%E6%A1%A3.pdf</b>
+
+- 首先定义AIDL工具类，提供打印服务初始化和切纸操作方法
+```java
+import com.sunmi.extprinterservice.ExtPrinterService;
+public class AidlUtil {
+    private static final String SERVICE＿PACKAGE = "com.sunmi.extprinterservice";
+    private static final String SERVICE＿ACTION = "com.sunmi.extprinterservice.PrinterService";
+
+    private ExtPrinterService printerService;
+    private static AidlUtil mAidlUtil = new AidlUtil();
+    private Context context;
+
+    private AidlUtil() {
+    }
+
+    public static AidlUtil getInstance() {
+        return mAidlUtil;
+    }
+
+    public void connectPrinterService(Context context) {
+        this.context = context.getApplicationContext();
+        Intent intent = new Intent();
+        intent.setPackage(SERVICE＿PACKAGE);
+        intent.setAction(SERVICE＿ACTION);
+        context.getApplicationContext().startService(intent);
+        context.getApplicationContext().bindService(intent, connService, Context.BIND_AUTO_CREATE);
+    }
+
+    public void disconnectPrinterService(Context context) {
+        if (printerService != null) {
+            context.getApplicationContext().unbindService(connService);
+            printerService = null;
+        }
+    }
+
+    public boolean isConnect() {
+        return printerService != null;
+    }
+
+    private ServiceConnection connService = new ServiceConnection() {
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            Log.i("tryhard","aidl service is disconnected");
+            printerService = null;
+        }
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            Log.i("tryhard","aidl service is connected");
+            printerService = ExtPrinterService.Stub.asInterface(service);
+        }
+    };
+
+    public void initPrinter() {
+        if (printerService == null) {
+            Toast.makeText(context,"Init",Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        try {
+            printerService.printerInit();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void cutPaper() {
+        if (printerService == null) {
+            Toast.makeText(context,"Cut",Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        try {
+            printerService.cutPaper(0, 0);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+- 在应用的onCreate阶段执行初始化
+```java
+    import com.self.demo01.utils.AidlUtil;
+    import com.sunmi.thingservice.sdk.IResponseCallback;
+    import com.sunmi.thingservice.sdk.IServiceEventListener;
+    import com.sunmi.thingservice.sdk.ThingSDK;
+    import com.sunmi.thingservice.sdk.ThingService;
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        app = this;
+        AidlUtil.getInstance().connectPrinterService(this);
+        ...
+    }
+```
+- 在打印事件的回调中调用切纸方法
+```java
+
+    private synchronized void print(CommandRequest request) {
+        if (Application.printerList == null || Application.printerList.size() == 0) {
+            Toast.makeText(this, "获取打印机失败", Toast.LENGTH_SHORT).show();
+            return;
+        } else {
+            LogUtil.e(TAG, "sass send------:" + PrintUtil.gson.toJson(Application.printerList.get(0)));
+        }
+        String callUuid = null;
+        ThingService service = Application.printerList.get(0);
+
+        try {
+            callUuid = ThingSDK.getInstance().execute(service, ThingSDK.ACTION_TYPE_COMMAND, ThingSDK.ACTION_EXECUTE, PrintUtil.gson.toJson(request), new IResponseCallback.Stub() {
+                @Override
+                public void response(String uuid, Map data) throws RemoteException {
+                    ...
+                    // 切纸
+                    AidlUtil.getInstance().cutPaper();
+                }
+            });
+
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+```
 ## h5端
 ### 与硬件交互设计
 通过window对象获取安卓webview中对外暴露的对象K2，K2会主动通知扫码与读卡事件，因为是同一广播，只能凭借经验对code进行判断区分，前端通过eventBus的机制进行全局监听和响应。
